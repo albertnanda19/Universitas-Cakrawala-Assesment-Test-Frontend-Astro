@@ -1,0 +1,74 @@
+---
+import { client } from "../lib/graphql/client";
+import { GET_ARTICLES } from "../lib/graphql/queries";
+import ArticleList from "../components/ArticleList.astro";
+import Layout from "../layouts/Layout.astro";
+import Seo from "../components/Seo.astro";
+
+const { articles } = await client.request(GET_ARTICLES);
+
+const url = Astro.url;
+const pageParam = url.searchParams.get("page");
+const page = Math.max(
+  1,
+  Number.isFinite(Number(pageParam)) ? Number(pageParam) : 1
+);
+const pageSize = 9;
+const total = Array.isArray(articles) ? articles.length : 0;
+const totalPages = total > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+const start = (page - 1) * pageSize;
+const end = start + pageSize;
+const pagedArticles = Array.isArray(articles) ? articles.slice(start, end) : [];
+---
+
+<Layout>
+  <Fragment slot="head">
+    <Seo
+      title="Universitas Cakrawala - News Portal"
+      description="Latest articles and updates from Universitas Cakrawala."
+      ogType="website"
+    />
+  </Fragment>
+
+  <h1 class="text-3xl font-bold py-6">Latest Articles</h1>
+
+  <ArticleList articles={pagedArticles} hrefBase="/" showExcerpt={true} />
+
+  <nav class="py-6 flex items-center justify-between">
+    {
+      page > 1 ? (
+        <a
+          href={`/?page=${page - 1}`}
+          class="px-4 py-2 border rounded bg-white hover:bg-gray-100"
+          rel="prev"
+        >
+          Prev
+        </a>
+      ) : (
+        <span class="px-4 py-2 text-gray-400 border rounded bg-gray-100">
+          Prev
+        </span>
+      )
+    }
+
+    <span class="text-sm text-gray-600">
+      Page {page} of {totalPages}
+    </span>
+
+    {
+      page < totalPages ? (
+        <a
+          href={`/?page=${page + 1}`}
+          class="px-4 py-2 border rounded bg-white hover:bg-gray-100"
+          rel="next"
+        >
+          Next
+        </a>
+      ) : (
+        <span class="px-4 py-2 text-gray-400 border rounded bg-gray-100">
+          Next
+        </span>
+      )
+    }
+  </nav>
+</Layout>

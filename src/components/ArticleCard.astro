@@ -1,0 +1,42 @@
+---
+import { getStrapiMedia } from "../lib/strapi";
+
+export interface Props {
+  article: any;
+  hrefBase?: string;
+  showExcerpt?: boolean;
+}
+
+const { article, hrefBase = "/", showExcerpt = false } = Astro.props as Props;
+const base =
+  typeof hrefBase === "string" && hrefBase.length > 0
+    ? hrefBase.endsWith("/")
+      ? hrefBase
+      : `${hrefBase}/`
+    : "/";
+const href = `${base}${article.Slug}`;
+const coverUrl = getStrapiMedia(article?.CoverImage?.url);
+---
+
+<a
+  href={href}
+  class="block p-4 border rounded-lg shadow bg-white hover:bg-gray-100 transition"
+>
+  {coverUrl && (
+    <img
+      src={coverUrl}
+      alt={article.Title || "Cover"}
+      loading="lazy"
+      decoding="async"
+      fetchpriority="low"
+      class="mb-3 w-full h-auto object-cover rounded"
+    />
+  )}
+  <h2 class="text-xl font-semibold">{article.Title}</h2>
+  {article?.Author && <p class="text-gray-600">By {article.Author}</p>}
+  {showExcerpt && article?.SEOMetaDescription && (
+    <p class="text-gray-700 mt-2 line-clamp-2">{article.SEOMetaDescription}</p>
+  )}
+</a>
+
+

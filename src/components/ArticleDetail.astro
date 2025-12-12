@@ -1,0 +1,35 @@
+---
+import { getStrapiMedia } from "../lib/strapi";
+import { renderNodes } from "../lib/richtext";
+
+export interface Props {
+  article: any;
+}
+
+const { article } = Astro.props as Props;
+const coverImageUrl = getStrapiMedia(article?.CoverImage?.url);
+const htmlContent = renderNodes(article?.Content);
+---
+
+<section class="p-6 w-screen">
+  <h1 class="text-3xl font-bold">{article.Title}</h1>
+  {article?.Author && <p class="text-gray-700">By {article.Author}</p>}
+
+  {
+    coverImageUrl && (
+      <div class="-mx-6">
+        <img
+          src={coverImageUrl}
+          alt={article.Title || "Cover image"}
+          loading="lazy"
+          decoding="async"
+          fetchpriority="low"
+          class="block "
+          width="100%"
+        />
+      </div>
+    )
+  }
+
+  <article class="prose max-w-full w-screen" set:html={htmlContent} />
+</section>

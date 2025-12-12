@@ -1,0 +1,95 @@
+---
+import { client } from "../../lib/graphql/client";
+import {
+  GET_CATEGORY_SLUGS,
+  GET_CATEGORY_BY_SLUG,
+} from "../../lib/graphql/queries";
+import ArticleList from "../../components/ArticleList.astro";
+import Layout from "../../layouts/Layout.astro";
+import Seo from "../../components/Seo.astro";
+
+export async function getStaticPaths() {
+  const { categories } = await client.request(GET_CATEGORY_SLUGS);
+  return categories.map((cat: any) => ({
+    params: { slug: cat.Slug },
+    props: { slug: cat.Slug },
+  }));
+}
+
+const { slug } = Astro.params;
+
+const { categories } = await client.request(GET_CATEGORY_BY_SLUG, { slug });
+const category = categories?.[0];
+const articles = Array.isArray(category?.articles) ? category.articles : [];
+
+const url = Astro.url;
+const pageParam = url.searchParams.get("page");
+const page = Math.max(
+  1,
+  Number.isFinite(Number(pageParam)) ? Number(pageParam) : 1
+);
+const pageSize = 9;
+const total = Array.isArray(articles) ? articles.length : 0;
+const totalPages = total > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+const start = (page - 1) * pageSize;
+const end = start + pageSize;
+const pagedArticles = Array.isArray(articles) ? articles.slice(start, end) : [];
+---
+
+<Layout>
+  <Fragment slot="head">
+    <Seo
+      title={`${category.Name} — Category`}
+      description={`Artikel dalam kategori ${category.Name}.`}
+      ogType="website"
+    />
+  </Fragment>
+
+  <h1 class="text-3xl font-bold py-6">Category: {category.Name}</h1>
+
+  {
+    articles.length === 0 && (
+      <p class="text-gray-600">Tidak ada artikel pada kategori ini.</p>
+    )
+  }
+
+  <ArticleList articles={pagedArticles} hrefBase="/" showExcerpt={true} />
+
+  <nav class="py-6 flex items-center justify-between">
+    {
+      page > 1 ? (
+        <a
+          href={`?page=${page - 1}`}
+          class="px-4 py-2 border rounded bg-white hover:bg-gray-100"
+          rel="prev"
+        >
+          Prev
+        </a>
+      ) : (
+        <span class="px-4 py-2 text-gray-400 border rounded bg-gray-100">
+          Prev
+        </span>
+      )
+    }
+
+    <span class="text-sm text-gray-600">
+      Page {page} of {totalPages}
+    </span>
+
+    {
+      page < totalPages ? (
+        <a
+          href={`?page=${page + 1}`}
+          class="px-4 py-2 border rounded bg-white hover:bg-gray-100"
+          rel="next"
+        >
+          Next
+        </a>
+      ) : (
+        <span class="px-4 py-2 text-gray-400 border rounded bg-gray-100">
+          Next
+        </span>
+      )
+    }
+  </nav>
+</Layout>

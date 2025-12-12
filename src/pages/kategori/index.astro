@@ -1,0 +1,38 @@
+---
+import "../../styles/global.css";
+import { client } from "../../lib/graphql/client";
+import { GET_CATEGORIES } from "../../lib/graphql/queries";
+import Layout from "../../layouts/Layout.astro";
+import Seo from "../../components/Seo.astro";
+
+const { categories } = await client.request(GET_CATEGORIES);
+const list =
+  Array.isArray(categories) && categories.length > 0 ? categories : [];
+---
+
+<Layout>
+  <Fragment slot="head">
+		<Seo
+      title="All Categories — Universitas Cakrawala"
+      description="Browse all categories available on Universitas Cakrawala."
+      ogType="website"
+    />
+  </Fragment>
+
+  <h1 class="text-3xl font-bold py-6">All Categories</h1>
+
+  {list.length === 0 && <p class="text-gray-600">Tidak ada kategori.</p>}
+
+  <ul class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    {
+      list.map((cat) => (
+        <li class="border rounded-lg bg-white hover:bg-gray-50 transition">
+          <a href={`/kategori/${cat.Slug}`} class="block p-5">
+            <h2 class="text-lg font-semibold">{cat.Name}</h2>
+            <p class="text-sm text-gray-500 mt-1">Lihat artikel</p>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>

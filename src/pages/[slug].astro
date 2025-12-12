@@ -1,0 +1,33 @@
+---
+import { client } from "../lib/graphql/client";
+import { GET_ARTICLES } from "../lib/graphql/queries";
+import ArticleDetail from "../components/ArticleDetail.astro";
+import Layout from "../layouts/Layout.astro";
+import Seo from "../components/Seo.astro";
+import { getStrapiMedia } from "../lib/strapi";
+
+export async function getStaticPaths() {
+  const { articles } = await client.request(GET_ARTICLES);
+  return articles.map((a: any) => ({
+    params: { slug: a.Slug },
+    props: { article: a },
+  }));
+}
+
+const { article } = Astro.props as { article: any };
+if (!article) {
+  return Astro.redirect("/404");
+}
+---
+
+<Layout>
+  <Fragment slot="head">
+    <Seo
+      title={article.SEOMetaTitle}
+      description={article.SEOMetaDescription}
+      image={getStrapiMedia(article?.CoverImage?.url)}
+      ogType="article"
+    />
+  </Fragment>
+  <ArticleDetail article={article} />
+</Layout>
