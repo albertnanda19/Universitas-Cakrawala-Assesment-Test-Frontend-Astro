@@ -1,24 +1,26 @@
 ---
 import { client } from "../lib/graphql/client";
-import { GET_ARTICLES } from "../lib/graphql/queries";
+import { GET_PAGINATED_ARTICLES } from "../lib/graphql/queries";
 import ArticleList from "../components/ArticleList.astro";
 import Layout from "../layouts/Layout.astro";
 import Seo from "../components/Seo.astro";
 
-const { articles } = await client.request(GET_ARTICLES);
+export const prerender = false;
 
 const url = Astro.url;
-const pageParam = url.searchParams.get("page");
-const page = Math.max(
-  1,
-  Number.isFinite(Number(pageParam)) ? Number(pageParam) : 1
-);
-const pageSize = 9;
-const total = Array.isArray(articles) ? articles.length : 0;
-const totalPages = total > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
-const start = (page - 1) * pageSize;
-const end = start + pageSize;
-const pagedArticles = Array.isArray(articles) ? articles.slice(start, end) : [];
+const pageParam = url.searchParams.get("page") || "1";
+const pageNum = parseInt(pageParam, 10);
+const page = Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1;
+const pageSize = 3;
+const sort = ["publishedAt:desc"];
+const { articles } = await client.request(GET_PAGINATED_ARTICLES, {
+  page,
+  pageSize,
+  sort,
+});
+const pagedArticles = Array.isArray(articles) ? articles : [];
+const hasPrev = page > 1;
+const hasNext = Array.isArray(articles) && articles.length === pageSize;
 ---
 
 <Layout>
@@ -36,7 +38,7 @@ const pagedArticles = Array.isArray(articles) ? articles.slice(start, end) : [];
 
   <nav class="py-6 flex items-center justify-between">
     {
-      page > 1 ? (
+      hasPrev ? (
         <a
           href={`/?page=${page - 1}`}
           class="px-4 py-2 border rounded bg-white hover:bg-gray-100"
@@ -51,12 +53,10 @@ const pagedArticles = Array.isArray(articles) ? articles.slice(start, end) : [];
       )
     }
 
-    <span class="text-sm text-gray-600">
-      Page {page} of {totalPages}
-    </span>
+    <span class="text-sm text-gray-600">Page {page}</span>
 
     {
-      page < totalPages ? (
+      hasNext ? (
         <a
           href={`/?page=${page + 1}`}
           class="px-4 py-2 border rounded bg-white hover:bg-gray-100"

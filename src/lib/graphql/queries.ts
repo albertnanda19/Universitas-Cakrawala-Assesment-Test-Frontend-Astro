@@ -86,3 +86,20 @@ export const GET_CATEGORIES = gql`
     }
   }
 `;
+
+export const GET_PAGINATED_ARTICLES = gql`
+  query GetPaginatedArticles($page: Int!, $pageSize: Int!, $sort: [String!]) {
+    articles(pagination: { page: $page, pageSize: $pageSize }, sort: $sort) {
+      documentId
+      Title
+      Slug
+      Author
+      SEOMetaTitle
+      SEOMetaDescription
+      CoverImage {
+        url
+      }
+      publishedAt
+    }
+  }
+`;
